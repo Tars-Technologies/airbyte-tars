@@ -114,7 +114,7 @@ class WebBaseSpider(scrapy.Spider):
         return any(content_type.startswith(ALLOWED_FILE_TYPE_MAP[ext]) for ext in self.allowed_extensions)
 
     def handle_error(self, failure):
-        logger.error(repr(failure))
+        logger.error(f"Error: {failure.getErrorMessage()}, {failure.request.url}, {failure.value}")
 
     def parse(self, response, **_):
         logger.info(f"Processing {response.url} with {self.allowed_domains}, {self.allowed_extensions}")
