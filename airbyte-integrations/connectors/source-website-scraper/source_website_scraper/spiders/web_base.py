@@ -1,11 +1,15 @@
-from urllib.parse import urlparse
-
 import scrapy
+
+from urllib.parse import urlparse
 from scrapy.http import Response, HtmlResponse
 from bs4 import BeautifulSoup
 from fake_useragent import UserAgent
+from airbyte_cdk.logger import init_logger
 
 from ..middleware.pdf import PdfDownloadMiddleware
+
+
+logger = init_logger("airbyte")
 
 STATUS_SEND_WAIT_TIME_IN_SECONDS = 5
 
@@ -112,6 +116,7 @@ class WebBaseSpider(scrapy.Spider):
     def parse(self, response, **_):
 
         if self.is_html_document(response) and self.is_allowed_type(response):
+            logger.info(f"Processing {response.url} is html document")
             yield {
                 "raw": response.text,
                 "content": self.get_clean_content(response),
@@ -119,6 +124,7 @@ class WebBaseSpider(scrapy.Spider):
             }
 
         if self.is_pdf_document(response) and self.is_allowed_type(response):
+            logger.info(f"Processing {response.url} is pdf document")
             yield {
                 "raw": response.body,
                 "content": self.get_pdf_content(response),
