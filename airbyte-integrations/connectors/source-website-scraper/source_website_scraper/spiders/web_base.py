@@ -134,4 +134,5 @@ class WebBaseSpider(scrapy.Spider):
         if isinstance(response, HtmlResponse):
             for link in response.css("a::attr(href)").getall():
                 if self.is_valid_link(link):
+                    logger.info(f"Following link: {link}")
                     yield response.follow(link, self.parse)
