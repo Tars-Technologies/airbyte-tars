@@ -113,6 +113,9 @@ class WebBaseSpider(scrapy.Spider):
         content_type = content_type.decode("utf-8")
         return any(content_type.startswith(ALLOWED_FILE_TYPE_MAP[ext]) for ext in self.allowed_extensions)
 
+    def handle_error(self, failure):
+        logger.error(repr(failure))
+
     def parse(self, response, **_):
         logger.info(f"Processing {response.url} with {self.allowed_domains}, {self.allowed_extensions}")
         logger.info(f"Response headers: {response.headers}")
@@ -136,4 +139,4 @@ class WebBaseSpider(scrapy.Spider):
             for link in response.css("a::attr(href)").getall():
                 if self.is_valid_link(link):
                     logger.info(f"Following link: {link}")
-                    yield response.follow(link, self.parse)
+                    yield response.follow(link, self.parse, errback=self.handle_error)
