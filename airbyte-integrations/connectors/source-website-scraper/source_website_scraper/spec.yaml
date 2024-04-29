@@ -34,3 +34,11 @@ connectionSpecification:
       title: Allowed Extensions
       type: array
       uniqueItems: true
+    allowed_domains:
+      description: List of allowed domains to scrape
+      items:
+        type: string
+      order: 3
+      title: Allowed Domains
+      type: array
+      uniqueItems: true

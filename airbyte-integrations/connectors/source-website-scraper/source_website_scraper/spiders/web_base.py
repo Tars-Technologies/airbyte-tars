@@ -62,6 +62,7 @@ class WebBaseSpider(scrapy.Spider):
         url: str,
         data_resource_id: str,
         allowed_extensions: list,
+        allowed_domains: list,
         *args,
         **kwargs,
     ):
@@ -69,7 +70,7 @@ class WebBaseSpider(scrapy.Spider):
         self.start_urls = [url]
         self.data_resource_id = data_resource_id
         self.allowed_extensions = allowed_extensions
-        self.allowed_domains = [urlparse(url).netloc]
+        self.allowed_domains = [urlparse(url).netloc, *allowed_domains]
         self.custom_settings = {
             **(self.custom_settings or {}),
         }
