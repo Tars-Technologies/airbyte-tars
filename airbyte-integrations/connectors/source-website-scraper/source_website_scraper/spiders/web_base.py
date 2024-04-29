@@ -114,9 +114,9 @@ class WebBaseSpider(scrapy.Spider):
         return any(content_type.startswith(ALLOWED_FILE_TYPE_MAP[ext]) for ext in self.allowed_extensions)
 
     def parse(self, response, **_):
-
+        logger.info(f"Processing {response.url} with {self.allowed_domains}, {self.allowed_extensions}")
         if self.is_html_document(response) and self.is_allowed_type(response):
-            logger.info(f"Processing {response.url} is html document")
+            logger.info(f"is html document")
             yield {
                 "raw": response.text,
                 "content": self.get_clean_content(response),
@@ -124,7 +124,7 @@ class WebBaseSpider(scrapy.Spider):
             }
 
         if self.is_pdf_document(response) and self.is_allowed_type(response):
-            logger.info(f"Processing {response.url} is pdf document")
+            logger.info(f"is pdf document")
             yield {
                 "raw": response.body,
                 "content": self.get_pdf_content(response),
