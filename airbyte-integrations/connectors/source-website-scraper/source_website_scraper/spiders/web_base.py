@@ -7,39 +7,9 @@ from fake_useragent import UserAgent
 from airbyte_cdk.logger import init_logger
 
 from ..middleware.pdf import PdfDownloadMiddleware
-
+from ..constants import ALLOWED_SCHEMES, NOT_ALLOWED_EXT, ALLOWED_FILE_TYPE_MAP
 
 logger = init_logger("airbyte")
-
-STATUS_SEND_WAIT_TIME_IN_SECONDS = 5
-
-ALLOWED_FILE_TYPE_MAP = {
-    "html": "text/html",
-    "pdf": "application/pdf",
-}
-
-NOT_ALLOWED_EXT = (
-    "zip",
-    "txt",
-    "csv",
-    "docx",
-    "doc",
-    "xls",
-    "xlsx",
-    "ppt",
-    "pptx",
-    "exe",
-    "jpg",
-    "jpeg",
-    "png",
-    "gif",
-    "wav",
-    "mp3",
-    "ogg",
-)
-
-# empty string means relative links
-ALLOWED_SCHEMES = ("", "http", "https")
 
 
 class WebBaseSpider(scrapy.Spider):
