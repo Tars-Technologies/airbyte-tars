@@ -4,11 +4,7 @@ from scrapy.spiders import SitemapSpider as ScrapySitemapSpider
 from fake_useragent import UserAgent
 
 from ..middleware.pdf import PdfDownloadMiddleware
-
-ALLOWED_FILE_TYPE_MAP = {
-    "html": "text/html",
-    "pdf": "application/pdf",
-}
+from ..constants import ALLOWED_FILE_TYPE_MAP
 
 
 class SitemapSpider(ScrapySitemapSpider):
