@@ -80,7 +80,7 @@ class Website(Stream, IncrementalMixin, ABC):
             },
         )
 
-        if self.use_browser:
+        if self.use_browser is True:
             crawler = Crawler(
                 BrowserSpider,
                 settings={
