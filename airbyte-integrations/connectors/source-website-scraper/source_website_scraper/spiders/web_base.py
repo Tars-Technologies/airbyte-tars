@@ -87,7 +87,7 @@ class WebBaseSpider(scrapy.Spider):
         logger.error(f"Error: {failure.getErrorMessage()}, {failure.request.url}, {failure.value}, {failure.type}")
 
     def parse(self, response, **_):
-        logger.info(f"Processing {response.url} with {self.allowed_domains}, {self.allowed_extensions}")
+        logger.info(f"Processing using web base browser {response.url} with {self.allowed_domains}, {self.allowed_extensions}")
         logger.info(f"Response headers: {response.headers}")
         if self.is_html_document(response) and self.is_allowed_type(response):
             logger.info(f"is html document")

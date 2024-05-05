@@ -2,11 +2,13 @@ from bs4 import BeautifulSoup
 from scrapy.http import Response
 from scrapy.spiders import SitemapSpider as ScrapySitemapSpider
 from fake_useragent import UserAgent
+from airbyte_cdk.logger import init_logger
 
 from ..middleware.pdf import PdfDownloadMiddleware
 from ..constants import ALLOWED_FILE_TYPE_MAP
 
 
+logger = init_logger("airbyte")
 class SitemapSpider(ScrapySitemapSpider):
     name = "sitemap_spider"
     custom_settings = {
@@ -62,6 +64,7 @@ class SitemapSpider(ScrapySitemapSpider):
         return any(content_type.startswith(ALLOWED_FILE_TYPE_MAP[ext]) for ext in self.allowed_extensions)
 
     def parse(self, response: Response, **_):
+        logger.info(f"Processing using sitemap scraper {response.url}")
         content = ""
         if self.can_crawl(response):
             if self.is_pdf_document(response) and self.is_allowed_type(response):
