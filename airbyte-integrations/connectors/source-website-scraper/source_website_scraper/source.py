@@ -26,6 +26,7 @@ from airbyte_cdk.models import (
 from airbyte_cdk.sources.streams import Stream, IncrementalMixin
 from .spiders.web_base import WebBaseSpider
 from .spiders.sitemap import SitemapSpider
+from .spiders.browser import BrowserSpider
 
 
 class Website(Stream, IncrementalMixin, ABC):
@@ -40,8 +41,9 @@ class Website(Stream, IncrementalMixin, ABC):
         self.data_dir = "storage/exports"
         self.url = config["url"]
         self.closespider_pagecount = config.get("closespider_pagecount", 100)
-        self.allowed_extensions = config.get("allowed_types", ["html"])
+        self.allowed_mime_types = config.get("allowed_mime_types", ["html"])
         self.allowed_domains = config.get("allowed_domains", [])
+        self.use_browser = config.get("use_browser", False)
         self.data_resource_id = str(uuid.uuid4())
         self._state = {}
 
@@ -71,27 +73,33 @@ class Website(Stream, IncrementalMixin, ABC):
 
     def run_spider(self):
 
-        crawler = (
-            Crawler(
+        crawler = Crawler(
+            WebBaseSpider,
+            settings={
+                "CLOSESPIDER_PAGECOUNT": self.closespider_pagecount,
+            },
+        )
+
+        if self.use_browser:
+            crawler = Crawler(
+                BrowserSpider,
+                settings={
+                    "CLOSESPIDER_PAGECOUNT": self.closespider_pagecount,
+                },
+            )
+        elif self.url.endswith("xml"):
+            crawler = Crawler(
                 SitemapSpider,
                 settings={
                     "CLOSESPIDER_PAGECOUNT": self.closespider_pagecount,
                 },
             )
-            if self.url.endswith("xml")
-            else Crawler(
-                WebBaseSpider,
-                settings={
-                    "CLOSESPIDER_PAGECOUNT": self.closespider_pagecount,
-                },
-            )
-        )
 
         crawler.signals.connect(reactor.stop, signal=signals.spider_closed)  # type: ignore
         extra_args = {
             "url": self.url,
             "data_resource_id": self.data_resource_id,
-            "allowed_extensions": self.allowed_extensions,
+            "allowed_extensions": self.allowed_mime_types,
             "allowed_domains": self.allowed_domains,
         }
         crawler.crawl(**extra_args)
