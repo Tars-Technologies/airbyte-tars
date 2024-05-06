@@ -44,7 +44,7 @@ class Website(Stream, IncrementalMixin, ABC):
         self.allowed_mime_types = config.get("allowed_mime_types", ["html"])
         self.allowed_domains = config.get("allowed_domains", [])
         self.use_browser = config.get("use_browser", False)
-        self.data_resource_id = str(uuid.uuid4())
+        self.data_resource_id = config.get("data_resource_id", str(uuid.uuid4()))
         self._state = {}
 
     @property

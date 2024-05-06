@@ -13,6 +13,12 @@ connectionSpecification:
       examples:
         - https://www.example.com
       order: 0
+    data_resource_id:
+      type: string
+      description: The data resource id to use for the connection
+      examples:
+        - 1234
+      order: 1
     use_browser:
       type: boolean
       title: Enable Headless Browser
@@ -20,14 +26,14 @@ connectionSpecification:
       examples:
         - true
       default: false
-      order: 1
+      order: 2
     closespider_pagecount:
       type: integer
       description: Maximum number of pages to scrape
       examples:
         - 1000
       default: 100
-      order: 2
+      order: 3
     allowed_mime_types:
       description: List of allowed mime types to scrape
       items:
@@ -38,7 +44,7 @@ connectionSpecification:
       default:
         - html
       minItems: 1
-      order: 3
+      order: 4
       title: Allowed mime types
       type: array
       uniqueItems: true
@@ -46,7 +52,7 @@ connectionSpecification:
       description: List of allowed domains to scrape
       items:
         type: string
-      order: 4
+      order: 5
       title: Allowed Domains
       type: array
       uniqueItems: true
