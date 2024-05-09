@@ -45,6 +45,7 @@ class Website(Stream, IncrementalMixin, ABC):
         self.allowed_domains = config.get("allowed_domains", [])
         self.use_browser = config.get("use_browser", False)
         self.data_resource_id = config.get("data_resource_id", str(uuid.uuid4()))
+        self.auth = config.get("auth", None)
         self._state = {}
 
     @property
@@ -101,6 +102,7 @@ class Website(Stream, IncrementalMixin, ABC):
             "data_resource_id": self.data_resource_id,
             "allowed_extensions": self.allowed_mime_types,
             "allowed_domains": self.allowed_domains,
+            "auth": self.auth,
         }
         crawler.crawl(**extra_args)
         reactor.run()  # type: ignore
@@ -179,7 +181,6 @@ class SourceWebsiteScraper(AbstractSource):
         state: MutableMapping[str, Any] = None,
     ) -> Iterable[AirbyteMessage]:
         stream = Website(config, name="website", cursor_field="content_hash")
-
         logger.info(f"Syncing stream: {stream.name}, {stream.config}, {state}")
         try:
             for record in stream.read_records(SyncMode.incremental, logger=logger, stream_state=state.get(stream.name, {})):
