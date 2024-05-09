@@ -1,13 +1,14 @@
 import scrapy
 import playwright.async_api
 
+from http.cookies import SimpleCookie
+from typing import Optional
 from urllib.parse import urlparse
 from scrapy_playwright.page import PageMethod
 from scrapy.http import Response
 from bs4 import BeautifulSoup
 from fake_useragent import UserAgent
 from airbyte_cdk.logger import init_logger
-
 from ..middleware.pdf import PdfDownloadMiddleware
 from ..constants import ALLOWED_SCHEMES, NOT_ALLOWED_EXT, ALLOWED_FILE_TYPE_MAP
 
@@ -20,7 +21,7 @@ async def should_abort_request(request: playwright.async_api.Request):
 
 class BrowserSpider(scrapy.Spider):
     name = "browser_spider"
-
+    auth_cookies: Optional[dict[str, str]] = None
     custom_settings = {
         "PLAYWRIGHT_DEFAULT_NAVIGATION_TIMEOUT": 60000,  # 1 minute
         "PLAYWRIGHT_BROWSER_TYPE": "chromium",  # can be chromium, firefox, or webkit
@@ -43,6 +44,7 @@ class BrowserSpider(scrapy.Spider):
         data_resource_id: str,
         allowed_extensions,
         allowed_domains: list,
+        auth: Optional[dict[str, any]],
         *args,
         **kwargs,
     ):
@@ -51,6 +53,12 @@ class BrowserSpider(scrapy.Spider):
         self.data_resource_id = data_resource_id
         self.allowed_extensions = allowed_extensions
         self.allowed_domains = [urlparse(url).netloc, *allowed_domains]
+        self.auth = auth
+        if self.auth:
+            auth_types = self.auth.get("type")
+            if "microsoft" in auth_types:
+                self.auth_cookies = self.format_cookies(self.auth.get("cookies"))
+                logger.info(f"Auth cookies: {self.auth_cookies}")
 
     def get_clean_content(self, response):
         soup = BeautifulSoup(response.text, "html.parser")
@@ -60,6 +68,7 @@ class BrowserSpider(scrapy.Spider):
     def start_requests(self):
         yield scrapy.Request(
             self.start_urls[0],
+            cookies=self.auth_cookies if self.auth_cookies else None,
             meta={
                 "playwright": True,
                 "playwright_page_methods": [
@@ -69,6 +78,14 @@ class BrowserSpider(scrapy.Spider):
                 ],
             },
         )
+
+    def format_cookies(self, cookies):
+        cookie = SimpleCookie()
+        cookie.load(cookies)
+        final_cookies = {}
+        for key, morsel in cookie.items():
+            final_cookies[key] = morsel.value
+        return final_cookies
 
     def get_pdf_content(self, response):
         pdf_download_middleware = PdfDownloadMiddleware()
@@ -106,6 +123,10 @@ class BrowserSpider(scrapy.Spider):
         logger.info(f"Processing with playwright browser {response.url} with {self.allowed_domains}, {self.allowed_extensions}")
         logger.info(f"Response headers: {response.headers}")
 
+        if "login.microsoftonline" in response.url:
+            logger.info(f"Microsoft login page, skipping")
+            return
+
         if self.is_html_document(response) and self.is_allowed_type(response):
             logger.info(f"is html document")
             yield {
@@ -129,6 +150,7 @@ class BrowserSpider(scrapy.Spider):
             full_url = response.urljoin(link)
             yield scrapy.Request(
                 full_url,
+                cookies=self.auth_cookies if self.auth_cookies else None,
                 meta={
                     "playwright": True,
                     "playwright_page_methods": [
