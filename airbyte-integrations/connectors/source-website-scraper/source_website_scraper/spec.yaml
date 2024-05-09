@@ -56,3 +56,22 @@ connectionSpecification:
       title: Allowed Domains
       type: array
       uniqueItems: true
+    auth:
+      type: object
+      properties:
+        type:
+          type: array
+          description: Type of authentication
+          items:
+            enum:
+              - microsoft
+          order: 0
+        cookies:
+          type: string
+          airbyte_secret: true
+          description: Cookies to use for authentication
+          examples:
+            - "cookie1=value1; cookie2=value2"
+          order: 1
+      order: 6
+      title: Authentication
