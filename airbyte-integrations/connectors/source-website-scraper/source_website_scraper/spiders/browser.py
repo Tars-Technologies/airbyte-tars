@@ -45,6 +45,7 @@ class BrowserSpider(scrapy.Spider):
         allowed_extensions,
         allowed_domains: list,
         auth: Optional[dict[str, any]],
+        follow_given_url_only: bool = False,
         *args,
         **kwargs,
     ):
@@ -53,6 +54,7 @@ class BrowserSpider(scrapy.Spider):
         self.data_resource_id = data_resource_id
         self.allowed_extensions = allowed_extensions
         self.allowed_domains = [urlparse(url).netloc, *allowed_domains]
+        self.follow_given_url_only = follow_given_url_only
         self.auth = auth
         if self.auth:
             auth_types = self.auth.get("type")
@@ -103,6 +105,11 @@ class BrowserSpider(scrapy.Spider):
 
         return True
 
+    def should_follow_url(self, link) -> bool:
+        if self.follow_given_url_only:
+            return link.startswith(self.start_urls[0])
+        return True
+
     def is_html_document(self, response: Response) -> bool:
         content_type = response.headers.get("Content-Type") or b""
         return content_type.decode("utf-8").startswith("text/html")
@@ -145,6 +152,9 @@ class BrowserSpider(scrapy.Spider):
 
         for link in response.css("a::attr(href)").getall():
             if not self.is_valid_link(link):
+                continue
+
+            if not self.should_follow_url(link):
                 continue
 
             full_url = response.urljoin(link)
