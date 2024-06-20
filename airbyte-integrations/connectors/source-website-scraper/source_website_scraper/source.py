@@ -45,7 +45,6 @@ class Website(Stream, IncrementalMixin, ABC):
         self.allowed_domains = config.get("allowed_domains", [])
         self.use_browser = config.get("use_browser", False)
         self.data_resource_id = config.get("data_resource_id", str(uuid.uuid4()))
-        self.follow_given_url_only = config.get("follow_url_only", False)
         self.auth = config.get("auth", None)
         self._state = {}
 
@@ -104,7 +103,6 @@ class Website(Stream, IncrementalMixin, ABC):
             "allowed_extensions": self.allowed_mime_types,
             "allowed_domains": self.allowed_domains,
             "auth": self.auth,
-            "follow_given_url_only": self.follow_given_url_only,
         }
         crawler.crawl(**extra_args)
         reactor.run()  # type: ignore

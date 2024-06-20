@@ -1,7 +1,6 @@
 import scrapy
 import playwright.async_api
 
-from http.cookies import SimpleCookie
 from typing import Optional
 from urllib.parse import urlparse
 from scrapy_playwright.page import PageMethod
@@ -9,8 +8,10 @@ from scrapy.http import Response
 from bs4 import BeautifulSoup
 from fake_useragent import UserAgent
 from airbyte_cdk.logger import init_logger
+
 from ..middleware.pdf import PdfDownloadMiddleware
 from ..constants import ALLOWED_SCHEMES, NOT_ALLOWED_EXT, ALLOWED_FILE_TYPE_MAP
+from ..utils.format_cookie import format_cookies
 
 logger = init_logger("airbyte")
 
@@ -45,7 +46,6 @@ class BrowserSpider(scrapy.Spider):
         allowed_extensions,
         allowed_domains: list,
         auth: Optional[dict[str, any]],
-        follow_given_url_only: bool = False,
         *args,
         **kwargs,
     ):
@@ -54,12 +54,11 @@ class BrowserSpider(scrapy.Spider):
         self.data_resource_id = data_resource_id
         self.allowed_extensions = allowed_extensions
         self.allowed_domains = [urlparse(url).netloc, *allowed_domains]
-        self.follow_given_url_only = follow_given_url_only
         self.auth = auth
         if self.auth:
             auth_types = self.auth.get("type")
             if "microsoft" in auth_types:
-                self.auth_cookies = self.format_cookies(self.auth.get("cookies"))
+                self.auth_cookies = format_cookies(self.auth.get("cookies"))
                 logger.info(f"Auth cookies: {self.auth_cookies}")
 
     def get_clean_content(self, response):
@@ -80,14 +79,6 @@ class BrowserSpider(scrapy.Spider):
                 ],
             },
         )
-
-    def format_cookies(self, cookies):
-        cookie = SimpleCookie()
-        cookie.load(cookies)
-        final_cookies = {}
-        for key, morsel in cookie.items():
-            final_cookies[key] = morsel.value
-        return final_cookies
 
     def get_pdf_content(self, response):
         pdf_download_middleware = PdfDownloadMiddleware()
@@ -152,9 +143,6 @@ class BrowserSpider(scrapy.Spider):
 
         for link in response.css("a::attr(href)").getall():
             if not self.is_valid_link(link):
-                continue
-
-            if not self.should_follow_url(link):
                 continue
 
             full_url = response.urljoin(link)

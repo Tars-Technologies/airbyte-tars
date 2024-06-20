@@ -75,10 +75,3 @@ connectionSpecification:
           order: 1
       order: 6
       title: Authentication
-    follow_url_only:
-      type: boolean
-      description: Follow only the given url
-      examples:
-        - true
-      default: false
-      order: 7

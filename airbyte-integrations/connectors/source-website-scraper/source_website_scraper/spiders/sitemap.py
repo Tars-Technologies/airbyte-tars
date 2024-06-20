@@ -1,4 +1,7 @@
+import scrapy
+
 from bs4 import BeautifulSoup
+from typing import Optional
 from scrapy.http import Response
 from scrapy.spiders import SitemapSpider as ScrapySitemapSpider
 from fake_useragent import UserAgent
@@ -6,11 +9,14 @@ from airbyte_cdk.logger import init_logger
 
 from ..middleware.pdf import PdfDownloadMiddleware
 from ..constants import ALLOWED_FILE_TYPE_MAP
-
+from ..utils.format_cookie import format_cookies
 
 logger = init_logger("airbyte")
+
+
 class SitemapSpider(ScrapySitemapSpider):
     name = "sitemap_spider"
+    auth_cookies: Optional[dict[str, str]] = None
     custom_settings = {
         "USER_AGENT": UserAgent(
             platforms=["pc"],
@@ -32,6 +38,7 @@ class SitemapSpider(ScrapySitemapSpider):
         url: str,
         data_resource_id: str,
         allowed_extensions: list,
+        auth: Optional[dict[str, any]],
         *args,
         **kwargs,
     ):
@@ -39,6 +46,28 @@ class SitemapSpider(ScrapySitemapSpider):
         self.sitemap_urls = [url]
         self.data_resource_id = data_resource_id
         self.allowed_extensions = allowed_extensions
+        self.auth = auth
+        if self.auth:
+            auth_types = self.auth.get("type")
+            if "microsoft" in auth_types:
+                self.auth_cookies = format_cookies(self.auth.get("cookies"))
+                logger.info(f"Auth cookies: {self.auth_cookies}")
+
+    def start_requests(self):
+        for url in self.sitemap_urls:
+            yield scrapy.Request(
+                url,
+                cookies=self.auth_cookies if self.auth_cookies else None,
+                callback=self._parse_sitemap,
+            )
+
+    def _parse_sitemap(self, response):
+        response = response.replace(body=self._get_sitemap_body(response))
+        for request in super()._parse_sitemap(response):
+            yield request.replace(
+                callback=self.parse,
+                cookies=self.auth_cookies if self.auth_cookies else None,
+            )
 
     def get_clean_content(self, response):
         soup = BeautifulSoup(response.text, "html.parser")
@@ -52,7 +81,12 @@ class SitemapSpider(ScrapySitemapSpider):
     def can_crawl(self, response: Response) -> bool:
         content_type = response.headers.get("Content-Type") or b""
         content_type = content_type.decode("utf-8")
-        return content_type.startswith("text/html") or content_type.startswith("text/xml") or content_type.startswith("application/xml")
+        return (
+            content_type.startswith("text/html")
+            or content_type.startswith("text/xml")
+            or content_type.startswith("application/xml")
+            or content_type.startswith("application/pdf")
+        )
 
     def is_pdf_document(self, response: Response) -> bool:
         content_type = response.headers.get("Content-Type") or b""
