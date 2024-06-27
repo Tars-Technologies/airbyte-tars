@@ -70,7 +70,10 @@ class Website(Stream, IncrementalMixin, ABC):
         return self.state
 
     def generate_hash(self, content):
+        if not isinstance(content, str):
+            content = str(content)
         return hashlib.md5(content.encode("utf-8")).hexdigest()
+
 
     def run_spider(self):
 
@@ -132,9 +135,12 @@ class Website(Stream, IncrementalMixin, ABC):
                 try:
                     df = pd.read_csv(file_path)
                     for _, row in df.iterrows():
-                        content_hash = self.generate_hash(row.get("content"))
+                        content = row.get("content", "")
+                        if not isinstance(content, str):
+                            content = str(content)
+                        content_hash = self.generate_hash(content)
                         transformed_row = {
-                            "content": row.get("content"),
+                            "content": content,
                             "data_resource_id": self.data_resource_id,
                             "source": row.get("source"),
                             "content_hash": f"{row.get('source')}_{content_hash}",
