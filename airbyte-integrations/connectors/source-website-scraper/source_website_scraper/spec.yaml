@@ -1,0 +1,58 @@
+documentationUrl: https://docsurl.com
+connectionSpecification:
+  $schema: http://json-schema.org/draft-07/schema#
+  title: Website Scraper Spec
+  type: object
+  required:
+    - url
+  properties:
+    url:
+      type: string
+      description: Url to scrape, if the url has .xml extension, it will be treated as sitemap
+      pattern: ^https?://
+      examples:
+        - https://www.example.com
+      order: 0
+    data_resource_id:
+      type: string
+      description: The data resource id to use for the connection
+      examples:
+        - 1234
+      order: 1
+    use_browser:
+      type: boolean
+      title: Enable Headless Browser
+      description: Use a Headless browser to scrape the website
+      examples:
+        - true
+      default: false
+      order: 2
+    closespider_pagecount:
+      type: integer
+      description: Maximum number of pages to scrape
+      examples:
+        - 1000
+      default: 100
+      order: 3
+    allowed_mime_types:
+      description: List of allowed mime types to scrape
+      items:
+        enum:
+          - pdf
+          - html
+        type: string
+      default:
+        - html
+      minItems: 1
+      order: 4
+      title: Allowed mime types
+      type: array
+      uniqueItems: true
+    allowed_domains:
+      description: List of allowed domains to scrape
+      items:
+        type: string
+      order: 5
+      title: Allowed Domains
+      type: array
+      uniqueItems: true
